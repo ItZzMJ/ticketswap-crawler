@@ -1,5 +1,5 @@
 # Ticketswap-Crawler
-ORIGINAL CREDITS TO: ducdigital
+ORIGINAL CREDITS TO: ducdigital and  andelizondo
 
 Do you want to go to an amazing festival but the tickets are sold out?
 Are you tired of checking TicketSwap every minute (or even every few seconds) for a new ticket?
