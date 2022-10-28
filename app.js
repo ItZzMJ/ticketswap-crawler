@@ -13,10 +13,10 @@ const FOUND_INTERVAL = 21;
 const ROBOT_INTERVAL = 1212;
 const ERROR_INTERVAL = 2121;
 const URLMAX_TIMEOUT = 2112;
-const HOST = 'https://www.ticketswap.nl';
-//const EVENT_URL = '/event/fiesta-macumba/0f4bf5d9-a5b5-46b2-8f15-0942ef96d1e1';
-const EVENT_URL = '/event/milkshake-festival-2017/sunday/68fc1cc6-6b98-4c4c-b828-2c7fa712c579/128371';
-//const EVENT_URL = '/event/a-campingflight-to-lowlands-paradise/regular/fcc6c783-6b32-4abd-8fe6-e9d0369c14df/20635';
+const HOST = 'https://www.ticketswap.de';
+
+const EVENT_URL = '/event/faceless-feast-of-fear-halloween-2022/regular-tickets/692cbc81-a4c4-42d7-9755-2c409c5a8039/2271042';
+//const EVENT_URL = '/event/time-warp-germany-2022/weekend-tickets/805cafa1-3ba5-4fdb-83be-ca30d4f8d2a4/2403295';
 
 // APP VARIABLES
 let sleepTime;
@@ -29,28 +29,36 @@ let ticketCrawler = function () {
         let result = yield buildRequest(HOST + EVENT_URL, 'GET');
         let $ = cheerio.load(result.body);
 
-        let availableListings = $('.listings-item:not(.listings-item--not-for-sale) a');
+        let listings_xpath = "/html/body/div[1]/div[2]/div[3]/a";
+        let listings_xpath_css = "div[id=__next] > div:nth-of-type(2) > div:nth-of-type(3) > a";
+        let sold_counter_xpath = "/html/body/div[1]/header/div[3]/div/div[2]/span";
+        let sold_counter_xpath_css = "div[id=__next] > header > div:nth-of-type(3) > div > div:nth-of-type(2) > span";
+        let available_ticket_amount_xpath = "/html/body/div[1]/header/div[3]/div/div[1]/span";
+        let available_ticket_amount_xpath_css = "div[id=__next] > header > div:nth-of-type(3) > div > div:nth-of-type(1) > span";
+
+        let availableListings = $(listings_xpath_css);
         if (availableListings.length > 0) {
             print(`\n    ********************* Found ${availableListings.length} available listing(s)! *******************`);
 
             let linksFn = {};
             availableListings.each((index, listing) => {
-                let fetchUrl = HOST + _.get(listing, 'attribs.href');
+                let fetchUrl = _.get(listing, 'attribs.href');
                 if (fetchUrl.includes('listing'))
                     linksFn[fetchUrl] = fetchResult(fetchUrl);
             });
-
             let linksResults = yield linksFn;
             _.each(linksResults, function ($query, url) {
-                let amount = $query('#listing-show-amount > option').length;
-                if (parseInt(amount) > 0)
+                let amount = $query(available_ticket_amount_xpath_css).length;
+                print(`AMOUNT: ${amount}`);
+                if (parseInt(amount) > 0) {
                     return botAction.availableTicket(url, amount);
-                else
+                } else {
                     botAction.reservedTicket(url);
+                }
             });
         }
         else {
-            let updatedSoldListings = $('.counter-sold .counter-value').text();
+            let updatedSoldListings = $(sold_counter_xpath_css).text();
             if ($('#recaptcha').length > 0)
                 botAction.robotCheck(HOST + EVENT_URL);
             else if (parseInt(updatedSoldListings) >= 0)
@@ -69,7 +77,7 @@ let ticketCrawler = function () {
 // BOT FUNCTIONS
 let botAction = {
     availableTicket: function (url, amount) {
-        exec(`open ${url}`);
+        exec(`xdg-open ${url}`);
         sleepTime = FOUND_INTERVAL;
         print(`${amount} TICKET(S) AVAILABLE!: \n${url}`);
         return false; // STOPS 'EACH 'LOOP
@@ -129,3 +137,9 @@ print(`\n
     Searching for tickets for: ${EVENT_URL.split('/')[2].replace(/-/g, ' ').toUpperCase()}
     ************************************************************************\n`);
 ticketCrawler();
+// print(`ls \n`);
+// exec('ls');
+// print(`xdg-open \n`);
+
+
+
